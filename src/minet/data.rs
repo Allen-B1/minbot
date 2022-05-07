@@ -101,7 +101,10 @@ impl Data for PacketMessage {
         let original_data = reader.bytes_remaining();
         let mut decompressed_data_buf = Vec::new();
         let decompressed_data = if compressed {
-            decompressed_data_buf = lz4_flex::block::decompress(original_data, len).unwrap();
+            decompressed_data_buf = match lz4_flex::block::decompress(original_data, len) {
+                Err(e) =>  { eprintln!("error decompressing: {:?}", e); return None },
+                Ok(v) => v
+            };
             &decompressed_data_buf
         } else {
             original_data
@@ -192,7 +195,6 @@ pub fn parse_udp(data: &[u8]) -> Option<Box<dyn DataClone>> {
             b
         });
     } else {
-        eprintln!("data[0] = {}", data[0]);
         return PacketMessage::deserialize(data).map(|b| {
             let b: Box<dyn DataClone> = Box::new(b);
             b

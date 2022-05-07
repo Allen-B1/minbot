@@ -16,11 +16,11 @@ impl<E: Error> Error for Err<E> {}
 
 fn print_data(protocol: &'static str, direction: &'static str, raw_data: &[u8]) {
     let data = minet::parse_udp(raw_data);
-    println!("{} {}", protocol, direction);
+    println!("\n{} {}", protocol, direction);
+    println!("raw: {}", raw_data.iter().map(|s| format!("{:02x} ", s)).collect::<String>());
     if let Some(data) = data {
-        println!("\tparsed: {:?}", data);
+        println!("parsed: {:#?}", data);
     }
-    println!("\traw: {}", raw_data.iter().map(|s| format!("{:02x} ", s)).collect::<String>())
 }
 
 #[tokio::main]
