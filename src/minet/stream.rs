@@ -81,6 +81,7 @@ impl Writer {
     /// This method is subtly wrong and
     /// needs to be fixed.
     pub fn str(&mut self, s: &str) {
+        self.bool(true);
         self.u16(s.len() as u16);
         self.0.extend(s.as_bytes());
     }
@@ -110,13 +111,13 @@ impl<'a> Reader<'a> {
             None
         } else {
             let value = 
-                ((self.data[self.pos] as u64) << 56) +
-                ((self.data[self.pos+1] as u64) << 48) +
-                ((self.data[self.pos+2] as u64) << 40) +
-                ((self.data[self.pos+3] as u64) << 32) +
-                ((self.data[self.pos+4] as u64) << 24) +
-                ((self.data[self.pos+5] as u64) << 16) +
-                ((self.data[self.pos+6] as u64) << 8) +
+                ((self.data[self.pos] as u64) << 56) |
+                ((self.data[self.pos+1] as u64) << 48) |
+                ((self.data[self.pos+2] as u64) << 40) |
+                ((self.data[self.pos+3] as u64) << 32) |
+                ((self.data[self.pos+4] as u64) << 24) |
+                ((self.data[self.pos+5] as u64) << 16) |
+                ((self.data[self.pos+6] as u64) << 8) |
                 ((self.data[self.pos+7] as u64));
             self.pos += 8;
             Some(value)
@@ -128,13 +129,13 @@ impl<'a> Reader<'a> {
             None
         } else {
             let value = 
-                ((self.data[self.pos] as i64) << 56) +
-                ((self.data[self.pos+1] as i64) << 48) +
-                ((self.data[self.pos+2] as i64) << 40) +
-                ((self.data[self.pos+3] as i64) << 32) +
-                ((self.data[self.pos+4] as i64) << 24) +
-                ((self.data[self.pos+5] as i64) << 16) +
-                ((self.data[self.pos+6] as i64) << 8) +
+                ((self.data[self.pos] as i64) << 56) |
+                ((self.data[self.pos+1] as i64) << 48) |
+                ((self.data[self.pos+2] as i64) << 40) |
+                ((self.data[self.pos+3] as i64) << 32) |
+                ((self.data[self.pos+4] as i64) << 24) |
+                ((self.data[self.pos+5] as i64) << 16) |
+                ((self.data[self.pos+6] as i64) << 8) |
                 ((self.data[self.pos+7] as i64));
             self.pos += 8;
             Some(value)
@@ -146,9 +147,9 @@ impl<'a> Reader<'a> {
             None
         } else {
             let value = 
-                ((self.data[self.pos] as u32) << 24) +
-                ((self.data[self.pos+1] as u32) << 16) +
-                ((self.data[self.pos+2] as u32) << 8) +
+                ((self.data[self.pos] as u32) << 24) |
+                ((self.data[self.pos+1] as u32) << 16) |
+                ((self.data[self.pos+2] as u32) << 8) |
                 ((self.data[self.pos+3] as u32));
             self.pos += 4;
             Some(value)
@@ -160,9 +161,9 @@ impl<'a> Reader<'a> {
             None
         } else {
             let value = 
-                ((self.data[self.pos] as i32) << 24) +
-                ((self.data[self.pos+1] as i32) << 16) +
-                ((self.data[self.pos+2] as i32) << 8) +
+                ((self.data[self.pos] as i32) << 24) |
+                ((self.data[self.pos+1] as i32) << 16) |
+                ((self.data[self.pos+2] as i32) << 8) |
                 ((self.data[self.pos+3] as i32));
             self.pos += 4;
             Some(value)
@@ -174,7 +175,7 @@ impl<'a> Reader<'a> {
             None
         } else {
             let value = 
-                ((self.data[self.pos] as u16) << 8) +
+                ((self.data[self.pos] as u16) << 8) |
                 ((self.data[self.pos+1] as u16));
             self.pos += 2;
             Some(value)
@@ -186,7 +187,7 @@ impl<'a> Reader<'a> {
             None
         } else {
             let value = 
-                ((self.data[self.pos] as i16) << 8) +
+                ((self.data[self.pos] as i16) << 8) |
                 ((self.data[self.pos+1] as i16));
             self.pos += 2;
             Some(value)
@@ -221,6 +222,11 @@ impl<'a> Reader<'a> {
     }
 
     pub fn str(&mut self) -> Option<&str> {
+        let exists = self.bool()?;
+        if !exists {
+            return Some("")
+        }
+
         let len = self.u16();
         len.and_then(|len| {
             self.bytes(len as usize)
@@ -234,7 +240,9 @@ impl<'a> Reader<'a> {
             return None
         }
 
-        Some(&self.data[self.pos..self.pos+n])
+        let slice = &self.data[self.pos..self.pos+n];
+        self.pos += n;
+        Some(slice)
     }
 
     pub fn bytes_remaining(&mut self) -> &[u8] {

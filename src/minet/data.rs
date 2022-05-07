@@ -85,10 +85,7 @@ impl Data for PacketMessage {
 
         buf.bool(self.compressed);
         if self.compressed {
-            let compressed_data: Vec<u8> = Vec::new();
-            let mut encoder = lz4::EncoderBuilder::new().build(compressed_data).unwrap();
-            encoder.write(&packet_data.0).unwrap();
-            let compressed_data = encoder.writer();
+            let compressed_data = lz4_flex::block::compress(&packet_data.0);
             buf.bytes(&compressed_data);
         } else {
             buf.bytes(&packet_data.0);
@@ -104,8 +101,7 @@ impl Data for PacketMessage {
         let original_data = reader.bytes_remaining();
         let mut decompressed_data_buf = Vec::new();
         let decompressed_data = if compressed {
-            let mut decompressor = lz4::Decoder::new(original_data).unwrap();
-            decompressor.read_to_end(&mut decompressed_data_buf).ok()?;
+            decompressed_data_buf = lz4_flex::block::decompress(original_data, len).unwrap();
             &decompressed_data_buf
         } else {
             original_data
@@ -209,4 +205,10 @@ fn test_framework_message() {
     assert!(FrameworkMessage::deserialize(&[0xfe, 0x1]).is_some());
     assert!(FrameworkMessage::deserialize(&[0xfe, 0x3, 0, 0, 0, 5]).is_some());
     assert!(FrameworkMessage::deserialize(&[0xfe, 0x4, 0, 0, 0, 5]).is_some());
+}
+
+#[test]
+fn test_packet_message() {
+    let data = &[0x03,0x00,0x44,0x01,0xf0,0x35,0x00,0x00,0x00,0x87,0x01,0x00,0x08,0x6f,0x66,0x66,0x69,0x63,0x69,0x61,0x6c,0x01,0x00,0x05,0x61,0x6c,0x6c,0x65,0x6e,0x01,0x00,0x05,0x65,0x6e,0x5f,0x55,0x53,0x01,0x00,0x0c,0x79,0x33,0x2f,0x70,0x33,0x58,0x37,0x77,0x45,0x74,0x6b,0x3d,0x4a,0xef,0x2f,0x79,0x87,0x17,0x4f,0x99,0x00,0x00,0x00,0x00,0xbd,0x7a,0xa1,0xb2,0x00,0xff,0x76,0xa6,0xff,0x00];
+    assert!(PacketMessage::deserialize(data).is_some());
 }

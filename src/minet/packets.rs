@@ -28,8 +28,6 @@ impl Data for ConnectPacket {
 
         let uuid_bytes = self.uuid.as_bytes();
         buf.bytes(uuid_bytes);
-        let cipher = crc::Crc::<u32>::new(&crc::CRC_32_CKSUM);
-        buf.u64(cipher.checksum(uuid_bytes) as u64);
 
         buf.bool(self.mobile);
         buf.u32(self.color);
@@ -45,7 +43,6 @@ impl Data for ConnectPacket {
         let usid = reader.str()?.to_string();
         let uuid_bytes = reader.bytes(16)?;
         let uuid_bytes = <&[u8] as TryInto<[u8; 16]>>::try_into(uuid_bytes).ok()?;
-        let uuid_checksum = reader.u64()?;
         let mobile = reader.bool()?;
         let color = reader.u32()?;
         // ignore mods
@@ -134,6 +131,19 @@ impl Data for DiscoverHost {
 
 #[test]
 fn test_connect_packet() {
-    let data = &[0x03,0x00,0x44,0x01,0xf0,0x35,0x00,0x00,0x00,0x87,0x01,0x00,0x08,0x6f,0x66,0x66,0x69,0x63,0x69,0x61,0x6c,0x01,0x00,0x05,0x61,0x6c,0x6c,0x65,0x6e,0x01,0x00,0x05,0x65,0x6e,0x5f,0x55,0x53,0x01,0x00,0x0c,0x79,0x33,0x2f,0x70,0x33,0x58,0x37,0x77,0x45,0x74,0x6b,0x3d,0x4a,0xef,0x2f,0x79,0x87,0x17,0x4f,0x99,0x00,0x00,0x00,0x00,0xbd,0x7a,0xa1,0xb2,0x00,0xff,0x76,0xa6,0xff,0x00];
+    let data = &[0, 0, 0, 135, 1, 0, 8, 111, 102, 102, 105, 99, 105, 97, 108, 1, 0, 5, 97, 108, 108, 101, 110, 1, 0, 5, 101, 110, 95, 85, 83, 1, 0, 12, 121, 51, 47, 112, 51, 88, 55, 119, 69, 116, 107, 61, 74, 239, 47, 121, 135, 23, 79, 153, 0, 0, 0, 0, 189, 122, 161, 178, 0, 255, 118, 166, 255, 0];
     assert!(ConnectPacket::deserialize(data).is_some());
+
+    let mut encoded = minet::Writer::new();
+    Data::serialize(&ConnectPacket { 
+        version_build: 135,
+        version_type: "rustbot".to_owned(),
+        player_name: "allen".to_owned(),
+        locale: "en-US".to_owned(),
+        usid: "AAAAAAAA".to_owned(),
+        uuid: uuid::Uuid::new_v4(),
+        mobile: false,
+        color: 0x00ff00ff
+    }, &mut encoded);
+    assert!(ConnectPacket::deserialize(&encoded.0).is_some());
 }
