@@ -108,48 +108,35 @@ build_version: i32 | version_type: str | player_name: str | locale: str | usid: 
 
 - The last half of the `uuid` is always a checksum of the first half. See the thing for more information.
 
-## AdminRequest [4]
+---
 
-## Announce [5]
+Packet ID = Line # - 1462
 
-## BeginBreak [6]
+## ClientSnapshot [x0D]
 
-## BeginPlace [7]
+```
+id: u32 | unit_id: u32 | dead: bool | 
+pos: (f32, f32) | pointer: (f32, f32) |
+rotation: f32 | base_rotation: f32 |
+vel: (f32, f32) |
+mining: (u16, u16) |
+boosting: bool | shooting: bool | chatting: bool | building: bool |
+requests: (i16, BuildPlan...) |
+view: (f32, f32) | view_size: (f32, f32) |
+```
 
-## BlockSnapshot [8]
+- `requests[0]` is -1 if there are no requests.
 
-## BuildingControlSelect [9]
+A `BuildPlan` is made of either the following, for destruction:
 
-## ClearItems [xA]
+```
+breaking <true>: bool | pos: (u16, u16) |
+```
 
-## ClientPacketReliable [xB]
+Or for construction:
 
-## ClientPacketUnreliable [xC]
-
-## ClientSnapshot [xD]
-
-## ConnectCall [xE]
-
-## ConnectConfirm [xF]
-
-## ConstructFinish [x10]
-
-## CreateBullet [x11]
-
-## CreateWeatherCall [x12]
-
-## DeconstructFinish [x13]
-
-## DeletePlans [x14]
-
-## DropItem [x15]
-
-## Effect [x16]
-
-## Effect2 [x17]
-
-## EffectReliable [x18]
-
-## EntitySnapshot [x19]
-
-## GameOver [x1A]
+```
+breaking <false>: bool | pos: (u16, u16) |
+block_id: u16 | rotation: u8 | 1: u8 | 
+config: ???
+```
