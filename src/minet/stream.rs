@@ -1,9 +1,9 @@
 
 /// Represents a buffer
 /// to which data can be written to.
-/// 
-/// The serialization and deserialization
-/// is the same as Java's [`DataOutput`](https://docs.oracle.com/javase/7/docs/api/java/io/DataOutput.html) class.
+/// The data format is consistent
+/// with Mindustry's internal data
+/// format.
 pub struct Writer(pub Vec<u8>);
 
 
